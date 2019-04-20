@@ -54,16 +54,13 @@
 #include <linux/platform_device.h>
 #endif
 
-#define GF_SPIDEV_NAME     "goodix,fingerprint"
-/*device name after register in charater*/
-#define GF_DEV_NAME            "goodix_fp"
-#define	GF_INPUT_NAME	    "gf3208"	/*"goodix_fp" */
+#define GF_SPIDEV_NAME		"goodix,fingerprint"
+#define GF_DEV_NAME		"goodix_fp"
+#define GF_INPUT_NAME		"gf3208"
 
-#define	CHRD_DRIVER_NAME	"goodix_fp_spi"
-#define	CLASS_NAME		    "goodix_fp"
-#define SPIDEV_MAJOR		225	/* assigned */
-#define N_SPI_MINORS		32	/* ... up to 256 */
-
+#define CHRD_DRIVER_NAME		"goodix_fp_spi"
+#define CLASS_NAME		"goodix_fp"
+#define N_SPI_MINORS		32
 
 struct gf_key_map key_map[] = {
 	{ "POWER",  KEY_POWER  },
@@ -100,6 +97,7 @@ static LIST_HEAD(device_list);
 static DEFINE_MUTEX(device_list_lock);
 static struct gf_dev gf;
 static struct class *gf_class;
+static unsigned int gf_major = -1;
 static int driver_init_partial(struct gf_dev *gf_dev);
 
 static void gf_enable_irq(struct gf_dev *gf_dev)
@@ -666,7 +664,7 @@ static int gf_probe(struct platform_device *pdev)
 	if (minor < N_SPI_MINORS) {
 		struct device *dev;
 
-		gf_dev->devt = MKDEV(SPIDEV_MAJOR, minor);
+		gf_dev->devt = MKDEV(gf_major, minor);
 		dev = device_create(gf_class, &gf_dev->spi->dev, gf_dev->devt,
 				gf_dev, GF_DEV_NAME);
 		status = IS_ERR(dev) ? PTR_ERR(dev) : 0;
@@ -829,15 +827,16 @@ static int __init gf_init(void)
 	 */
 
 	BUILD_BUG_ON(N_SPI_MINORS > 256);
-	status = register_chrdev(SPIDEV_MAJOR, CHRD_DRIVER_NAME, &gf_fops);
-	if (status < 0) {
+	/* Dynamically allocate a major */
+	gf_major = register_chrdev(0, CHRD_DRIVER_NAME, &gf_fops);
+	if (gf_major < 0) {
 		pr_warn("Failed to register char device!\n");
 		FUNC_EXIT();
 		return status;
 	}
 	gf_class = class_create(THIS_MODULE, CLASS_NAME);
 	if (IS_ERR(gf_class)) {
-		unregister_chrdev(SPIDEV_MAJOR, gf_driver.driver.name);
+		unregister_chrdev(gf_major, gf_driver.driver.name);
 		pr_warn("Failed to create class.\n");
 		FUNC_EXIT();
 		return PTR_ERR(gf_class);
@@ -849,7 +848,7 @@ static int __init gf_init(void)
 #endif
 	if (status < 0) {
 		class_destroy(gf_class);
-		unregister_chrdev(SPIDEV_MAJOR, gf_driver.driver.name);
+		unregister_chrdev(gf_major, gf_driver.driver.name);
 		pr_warn("Failed to register SPI driver.\n");
 	}
 
@@ -877,7 +876,8 @@ static void __exit gf_exit(void)
 	spi_unregister_driver(&gf_driver);
 #endif
 	class_destroy(gf_class);
-	unregister_chrdev(SPIDEV_MAJOR, gf_driver.driver.name);
+	if (gf_major >= 0)
+		unregister_chrdev(gf_major, gf_driver.driver.name);
 	FUNC_EXIT();
 }
 
