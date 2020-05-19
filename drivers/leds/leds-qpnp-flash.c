@@ -504,6 +504,7 @@ unlock_mutex:
 	return ret;
 }
 
+#ifdef CONFIG_DEBUG_FS
 static ssize_t flash_led_dfs_dbg_enable(struct file *file,
 			const char __user *buf, size_t count, loff_t *ppos) {
 
@@ -559,6 +560,7 @@ unlock_mutex:
 	mutex_unlock(&log->debugfs_lock);
 	return ret;
 }
+#endif
 
 static const struct file_operations flash_led_dfs_latched_reg_fops = {
 	.open		= flash_led_dfs_open,
@@ -573,11 +575,13 @@ static const struct file_operations flash_led_dfs_strobe_reg_fops = {
 	.write		= flash_led_dfs_fault_reg_enable,
 };
 
+#ifdef CONFIG_DEBUG_FS
 static const struct file_operations flash_led_dfs_dbg_feature_fops = {
 	.open		= flash_led_dfs_open,
 	.release	= flash_led_dfs_close,
 	.write		= flash_led_dfs_dbg_enable,
 };
+#endif
 
 static int
 qpnp_led_masked_write(struct qpnp_flash_led *led, u16 addr, u8 mask, u8 val)
@@ -2456,11 +2460,15 @@ static int qpnp_flash_led_probe(struct platform_device *pdev)
 	struct qpnp_flash_led *led;
 	unsigned int base;
 	struct device_node *node, *temp;
+#ifdef CONFIG_DEBUG_FS
 	struct dentry *root, *file;
+#endif
 	int rc, i = 0, j, num_leds = 0;
 	u32 val;
 
+#ifdef CONFIG_DEBUG_FS
 	root = NULL;
+#endif
 	node = pdev->dev.of_node;
 	if (node == NULL) {
 		dev_info(&pdev->dev, "No flash device defined\n");
@@ -2624,6 +2632,7 @@ static int qpnp_flash_led_probe(struct platform_device *pdev)
 
 	led->num_leds = i;
 
+#ifdef CONFIG_DEBUG_FS
 	root = debugfs_create_dir("flashLED", NULL);
 	if (IS_ERR_OR_NULL(root)) {
 		pr_err("Error creating top level directory err%ld",
@@ -2654,16 +2663,19 @@ static int qpnp_flash_led_probe(struct platform_device *pdev)
 		pr_err("error creating 'strobe' entry\n");
 		goto error_led_debugfs;
 	}
+#endif
 
 	dev_set_drvdata(&pdev->dev, led);
 
 	return 0;
 
+#ifdef CONFIG_DEBUG_FS
 error_led_debugfs:
 	debugfs_remove_recursive(root);
 error_free_led_sysfs:
 	i = led->num_leds - 1;
 	j = ARRAY_SIZE(qpnp_flash_led_attrs) - 1;
+#endif
 error_led_register:
 	for (; i >= 0; i--) {
 		for (; j >= 0; j--)
@@ -2697,7 +2709,9 @@ static int qpnp_flash_led_remove(struct platform_device *pdev)
 						&qpnp_flash_led_attrs[j].attr);
 		led_classdev_unregister(&led->flash_node[i].cdev);
 	}
+#ifdef CONFIG_DEBUG_FS
 	debugfs_remove_recursive(led->dbgfs_root);
+#endif
 	mutex_destroy(&led->flash_led_lock);
 	wakeup_source_trash(&led->flashlight_led_lock);
 	destroy_workqueue(led->ordered_workq);
