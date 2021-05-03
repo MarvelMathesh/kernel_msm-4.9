@@ -292,13 +292,13 @@ static int lcd_backlight_registered;
 					} while (0)
 
 static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
-				      enum led_brightness value)
+			enum led_brightness value)
 {
 	struct msm_fb_data_type *mfd = dev_get_drvdata(led_cdev->dev->parent);
 	u64 bl_lvl;
 	int brightness_min;
 
-	brightness_min = 1;
+	brightness_min = 10;
 
 	if (mfd->boot_notification_led) {
 		led_trigger_event(mfd->boot_notification_led, 0);
@@ -324,7 +324,6 @@ static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 	MDSS_BRIGHT_TO_BL(bl_lvl, value, mfd->panel_info->bl_max,
 				mfd->panel_info->brightness_max);
 	#endif
-
 	if (!bl_lvl && value)
 		bl_lvl = 1;
 	pr_debug("bl_lvl is %llu, value is %d\n", bl_lvl, value);

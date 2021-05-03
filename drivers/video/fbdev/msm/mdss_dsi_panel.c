@@ -934,6 +934,12 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 
 	pr_debug("%s: ndx=%d cmd_cnt=%d\n", __func__,
 				ctrl->ndx, on_cmds->cmd_cnt);
+	if (ctrl->init_last) {
+		if (ctrl->gamma_cmds.cmd_cnt)
+			mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma_cmds, CMD_REQ_COMMIT);
+		if (ctrl->ce_cmds.cmd_cnt)
+			mdss_dsi_panel_cmds_send(ctrl, &ctrl->ce_cmds, CMD_REQ_COMMIT);
+	}
 
 	if (ctrl->init_last) {
 		if (ctrl->gamma_cmds.cmd_cnt)
@@ -3021,6 +3027,8 @@ static int mdss_panel_parse_dt(struct device_node *np,
 	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->bright_cmds,
 		"qcom,mdss-dsi-panel-ce-bright-command", "qcom,mdss-dsi-panel-ce-command-state");
 
+	ctrl_pdata->init_last = of_property_read_bool(np, "qcom,mdss-dsi-init-last");
+
 	rc = of_property_read_u32(np, "qcom,adjust-timer-wakeup-ms", &tmp);
 	pinfo->adjust_timer_delay_ms = (!rc ? tmp : 0);
 
@@ -3090,7 +3098,8 @@ int mdss_dsi_panel_init(struct device_node *node,
 	ctrl_pdata->post_panel_on = mdss_dsi_post_panel_on;
 	ctrl_pdata->off = mdss_dsi_panel_off;
 	ctrl_pdata->low_power_config = mdss_dsi_panel_low_power_config;
-	ctrl_pdata->panel_data.set_backlight = mdss_dsi_panel_bl_ctrl;
+	if (is_Lcm_Present)
+		ctrl_pdata->panel_data.set_backlight = mdss_dsi_panel_bl_ctrl;
 	ctrl_pdata->panel_data.apply_display_setting =
 			mdss_dsi_panel_apply_display_setting;
 	if (is_Lcm_Present)

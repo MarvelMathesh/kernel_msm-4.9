@@ -145,6 +145,8 @@ void mdss_dump_dsi_debug_bus(u32 bus_dump_flag,
 	pr_info("========End DSI Debug Bus=========\n");
 }
 
+bool is_Lcm_Present = false;
+
 static void mdss_dsi_pm_qos_add_request(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
 	struct irq_info *irq_info;
@@ -3062,6 +3064,7 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 					cfg_np_name, MDSS_MAX_PANEL_LEN);
 			}
 		}
+
 		is_Lcm_Present = true;
 		return dsi_pan_node;
 	}
@@ -3953,6 +3956,8 @@ static int mdss_dsi_probe(struct platform_device *pdev)
 		pr_err("%s: Invalid DSI hw configuration\n", __func__);
 		goto error;
 	}
+	mutex_init(&gamma_lock);
+	mutex_init(&ce_lock);
 
 	mutex_init(&gamma_lock);
 	mutex_init(&ce_lock);

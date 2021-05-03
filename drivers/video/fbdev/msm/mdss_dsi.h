@@ -74,6 +74,7 @@ enum {
 	BRIGHT = 12,
 };
 
+
 enum {		/* mipi dsi panel */
 	DSI_VIDEO_MODE,
 	DSI_CMD_MODE,
@@ -494,7 +495,6 @@ struct mdss_dsi_ctrl_pdata {
 	struct dsi_panel_cmds status_cmds;
 	struct dsi_panel_cmds idle_on_cmds; /* for lp mode */
 	struct dsi_panel_cmds idle_off_cmds;
-
 	struct dsi_panel_cmds warm_cmds;
 	struct dsi_panel_cmds cool_cmds;
 	struct dsi_panel_cmds nature_cmds;
@@ -506,6 +506,7 @@ struct mdss_dsi_ctrl_pdata {
 	struct dsi_panel_cmds gamma_cmds;
 	struct dsi_panel_cmds ce_cmds;
 	bool init_last;
+
 	u32 *status_valid_params;
 	u32 *status_cmds_rlen;
 	u32 *status_value;

@@ -4289,6 +4289,7 @@ static void fg_hysteresis_config(struct fg_chip *chip)
 	soft_cold = get_prop_jeita_temp(chip, FG_MEM_SOFT_COLD);
 	hard_hot = get_prop_jeita_temp(chip, FG_MEM_HARD_HOT);
 	hard_cold = get_prop_jeita_temp(chip, FG_MEM_HARD_COLD);
+
 	if (chip->health == POWER_SUPPLY_HEALTH_OVERHEAT && !chip->batt_hot) {
 		/* turn down the hard hot threshold */
 		set_prop_jeita_temp(chip, FG_MEM_HARD_HOT, hard_hot - chip->hot_hysteresis);
@@ -4376,6 +4377,7 @@ static int fg_init_batt_temp_state(struct fg_chip *chip)
 		(batt_info_sts & JEITA_HARD_COLD_RT_STS) ? true : false;
 	chip->batt_warm = false;
 	chip->batt_cool = false;
+
 	if (chip->batt_hot || chip->batt_cold) {
 		if (chip->batt_hot) {
 			chip->health = POWER_SUPPLY_HEALTH_OVERHEAT;
@@ -4867,8 +4869,7 @@ static int fg_power_set_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_HEALTH:
 		chip->health = val->intval;
-		if (chip->jeita_hysteresis_support)
-			fg_hysteresis_config(chip);
+                fg_hysteresis_config(chip);
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_DONE:
 		chip->charge_done = val->intval;
@@ -7083,13 +7084,13 @@ out:
 	return rc;
 }
 
-bool add_india_temperature = false;
+bbool add_india_temperature = false;
 void add_warm_india_temperature(struct fg_chip *chip)
 {
 	char *boardid_string = NULL;
 	char boardid_start[32] = " ";
-	int India_0 = 1;
-	int India_1 = 1;
+	int India_0 = 0;
+	int India_1 = 0;
 
 	boardid_string = strstr(saved_command_line, "board_id=");
 
