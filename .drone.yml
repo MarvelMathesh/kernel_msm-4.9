@@ -1,0 +1,15 @@
+clone:
+  depth: 1
+  branch: main
+kind: pipeline
+name: pipe
+steps:
+  - name: build
+    image: ubuntu:latest
+    environment:
+      TOKEN:
+       from_secret: TOKEN
+    commands: 
+       - apt update && apt install git wget -y
+       - chmod +x tg.sh 
+       - ./tg.sh
