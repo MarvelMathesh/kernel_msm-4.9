@@ -80,8 +80,6 @@ struct gf_key_map key_map[] = {
 };
 
 /**************************debug******************************/
-/*#define GF_DEBUG*/
-#undef  GF_DEBUG
 
 #ifdef GF_DEBUG
 #define gf_dbg(fmt, args...) do { \
@@ -781,7 +779,7 @@ static int gf_suspend(struct spi_device *spi, pm_message_t mesg)
 static int gf_suspend(struct platform_device *pdev, pm_message_t state)
 #endif
 {
-	gf_dbg("gf_suspend_test.\n");
+//	gf_dbg("gf_suspend_test.\n");
 	return 0;
 }
 
@@ -791,7 +789,7 @@ static int gf_resume(struct spi_device *spi)
 static int gf_resume(struct platform_device *pdev)
 #endif
 {
-	gf_dbg("gf_resume_test.\n");
+//	gf_dbg("gf_resume_test.\n");
 	return 0;
 }
 
