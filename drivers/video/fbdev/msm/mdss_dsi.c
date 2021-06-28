@@ -52,8 +52,6 @@ static struct mdss_dsi_data *mdss_dsi_res;
 
 static struct pm_qos_request mdss_dsi_pm_qos_request;
 
-bool is_Lcm_Present = false;
-
 void mdss_dump_dsi_debug_bus(u32 bus_dump_flag,
 	u32 **dump_mem)
 {
@@ -3956,9 +3954,6 @@ static int mdss_dsi_probe(struct platform_device *pdev)
 		pr_err("%s: Invalid DSI hw configuration\n", __func__);
 		goto error;
 	}
-	mutex_init(&gamma_lock);
-	mutex_init(&ce_lock);
-
 	mutex_init(&gamma_lock);
 	mutex_init(&ce_lock);
 

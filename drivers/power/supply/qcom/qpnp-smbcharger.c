@@ -421,11 +421,6 @@ enum wake_reason {
 #define HVDCP_OTG_VOTER		"HVDCP_OTG_VOTER"
 #define HVDCP_PULSING_VOTER	"HVDCP_PULSING_VOTER"
 
-/* fg cc workaround */
-#if defined(CONFIG_MACH_XIAOMI_LAND)
-#define NO_CHARGE_COUNTER
-#endif
-
 static const unsigned int smbchg_extcon_cable[] = {
 	EXTCON_USB,
 	EXTCON_USB_HOST,
@@ -490,10 +485,6 @@ module_param_named(
 	wipower_dcin_hyst_uv, wipower_dcin_hyst_uv,
 	int, 00600
 );
-
-static int rerun_apsd(struct smbchg_chip *chip);
-static void usb_type_check_work_fn(struct smbchg_chip *chip);
-int rerun_usb_insertion = 0;
 
 #define pr_smb(reason, fmt, ...)				\
 	do {							\
@@ -3777,63 +3768,10 @@ static void check_battery_type(struct smbchg_chip *chip)
 	}
 }
 
-int into_fastmmi_mode(struct smbchg_chip *chip)
-{
-	int ret;
-	char *cmdline_fastmmi = NULL;
-	char *temp;
-
-	cmdline_fastmmi = strstr(saved_command_line, "androidboot.mode=");
-	if (cmdline_fastmmi != NULL) {
-		temp = cmdline_fastmmi + strlen("androidboot.mode=");
-		ret = strncmp(temp, "ffbm", strlen("ffbm"));
-		if (ret == 0) {
-			pr_err("into fastmmi mode\n");
-			return 1;/* fastmmi mode*/
-		} else {
-			pr_err("others modes\n");
-			return 2;/* Others mode*/
-		}
-	}
-	pr_err("has no androidboot.mode \n");
-	return 0;
-}
-
-bool disable_charging = false;
-void get_capacity_disable_charging(struct smbchg_chip *chip)
-{
-	char *boardid_string = NULL;
-	char boardid_start[32] = " ";
-	int India_0;
-	int India_1;
-
-	boardid_string = strstr(saved_command_line, "board_id=");
-
-	if (boardid_string != NULL) {
-		strncpy(boardid_start, boardid_string+9, 9);
-		India_0 = strncmp(boardid_start, "S88537CA1", 9);
-		India_1 = strncmp(boardid_start, "S88537EC1", 9);
-	}
-	if (((India_0 == 0) || (India_1 == 0)) && (into_fastmmi_mode(chip) == 1)) {
-		disable_charging = true;
-	} else {
-		pr_err("else discharg\n");
-		disable_charging = false;
-	}
-}
-
 static void smbchg_external_power_changed(struct power_supply *psy)
 {
 	struct smbchg_chip *chip = power_supply_get_drvdata(psy);
 	int rc, soc;
-	enum power_supply_type usb_supply_type;
-	char *usb_type_name = "null";
-
-	read_usb_type(chip, &usb_type_name, &usb_supply_type);
-	if ((usb_supply_type == POWER_SUPPLY_TYPE_USB) && (chip->usb_present) && (rerun_usb_insertion < 1)) {
-		msleep(1000);
-		usb_type_check_work_fn(chip);
-	}
 
 	smbchg_aicl_deglitch_wa_check(chip);
 
@@ -4849,7 +4787,7 @@ static void handle_usb_removal(struct smbchg_chip *chip)
 	extcon_set_cable_state_(chip->extcon, EXTCON_USB, chip->usb_present);
 	smbchg_request_dpdm(chip, false);
 	schedule_work(&chip->usb_set_online_work);
-	rerun_usb_insertion = 0;
+
 	pr_smb(PR_MISC, "setting usb psy health UNKNOWN\n");
 	chip->usb_health = POWER_SUPPLY_HEALTH_UNKNOWN;
 	power_supply_changed(chip->usb_psy);
@@ -5516,8 +5454,6 @@ static int rerun_apsd(struct smbchg_chip *chip)
 		reinit_completion(&chip->usbin_uv_lowered);
 		reinit_completion(&chip->src_det_lowered);
 		reinit_completion(&chip->usbin_uv_raised);
-		if (rerun_usb_insertion < 2)
-			rerun_usb_insertion++;
 
 		/* re-run APSD */
 		rc = smbchg_masked_write(chip,
@@ -6053,9 +5989,7 @@ static enum power_supply_property smbchg_battery_properties[] = {
 	POWER_SUPPLY_PROP_FLASH_ACTIVE,
 	POWER_SUPPLY_PROP_FLASH_TRIGGER,
 	POWER_SUPPLY_PROP_DP_DM,
-#ifndef NO_CHARGE_COUNTER
 	POWER_SUPPLY_PROP_CHARGE_COUNTER,
-#endif
 	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMITED,
 	POWER_SUPPLY_PROP_RERUN_AICL,
 	POWER_SUPPLY_PROP_RESTRICTED_CHARGING,
@@ -6424,9 +6358,6 @@ static irqreturn_t batt_cold_handler(int irq, void *_chip)
 }
 #define BATT_WARM_CURRENT		900
 #define BATT_WARM_VOLTAGE		15
-
-#define BATT_WARM_CURRENT	900
-#define BATT_WARM_VOLTAGE	15
 
 static irqreturn_t batt_warm_handler(int irq, void *_chip)
 {

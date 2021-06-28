@@ -7084,7 +7084,7 @@ out:
 	return rc;
 }
 
-bbool add_india_temperature = false;
+bool add_india_temperature = false;
 void add_warm_india_temperature(struct fg_chip *chip)
 {
 	char *boardid_string = NULL;
