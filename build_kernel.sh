@@ -4,7 +4,7 @@
 
 source anykernel/build_helper.sh
 
-[[ $1 == 'g'   ]] && export model=land
+[[ $1 == 'g'   ]] && export model=holland2
 
 BUILD_START=$(date +"%s")
 
